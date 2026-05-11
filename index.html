@@ -227,11 +227,11 @@
           <div class="hero-video-compare" aria-label="Text overlay comparison">
             <div class="hero-video-tile">
               <span class="hero-video-label">Corrupted input</span>
-              <video data-src="sampled_24f_fps10/GoMatching/text_removal_real/outputs_easy_hard_try2/easy/text_on/normal/pexels_landscape_landscape_6507513_000.mp4" autoplay muted loop playsinline preload="none"></video>
+              <video data-src="src/GoMatching/text_removal_real/outputs_easy_hard_try2/easy/text_on/normal/pexels_landscape_landscape_6507513_000.mp4" autoplay muted loop playsinline preload="none"></video>
             </div>
             <div class="hero-video-tile">
               <span class="hero-video-label">Clean target</span>
-              <video data-src="sampled_24f_fps10/GoMatching/text_removal_real/outputs_easy_hard_try2/easy/original/normal/pexels_landscape_landscape_6507513_000.mp4" autoplay muted loop playsinline preload="none"></video>
+              <video data-src="src/GoMatching/text_removal_real/outputs_easy_hard_try2/easy/original/normal/pexels_landscape_landscape_6507513_000.mp4" autoplay muted loop playsinline preload="none"></video>
             </div>
           </div>
           <div class="hero-caption">
@@ -377,15 +377,15 @@
       const split = s.split;
       const group = s.group;
       const file = s.file;
-      if (type === 'input') return `sampled_24f_fps10/GoMatching/text_removal_real/outputs_easy_hard_try2/${split}/text_on/${group}/${file}`;
-      if (type === 'gt') return `sampled_24f_fps10/GoMatching/text_removal_real/outputs_easy_hard_try2/${split}/original/${group}/${file}`;
-      if (type === 'ours') return `sampled_24f_fps10/Competitor_output/ours/${split}/text_on/${group}/predicted_videos/${file}`;
-      if (type === 'gm_propainter') return `sampled_24f_fps10/Competitor_output/gomatching/propainter/${split}/${group}/${file}`;
-      if (type === 'gm_minimax') return `sampled_24f_fps10/Competitor_output/gomatching/minimax/${split}/${group}/${file}`;
-      if (type === 'gm_diffueraser') return `sampled_24f_fps10/Competitor_output/gomatching/diffueraser/${split}/${group}/${file}`;
-      if (type === 'gt_propainter') return `sampled_24f_fps10/Competitor_output/gt/propainter/${split}/${group}/${file}`;
-      if (type === 'gt_minimax') return `sampled_24f_fps10/Competitor_output/gt/minimax/${split}/${group}/${file}`;
-      if (type === 'gt_diffueraser') return `sampled_24f_fps10/Competitor_output/gt/diffueraser/${split}/${group}/${file}`;
+      if (type === 'input') return `src/GoMatching/text_removal_real/outputs_easy_hard_try2/${split}/text_on/${group}/${file}`;
+      if (type === 'gt') return `src/GoMatching/text_removal_real/outputs_easy_hard_try2/${split}/original/${group}/${file}`;
+      if (type === 'ours') return `src/Competitor_output/ours/${split}/text_on/${group}/predicted_videos/${file}`;
+      if (type === 'gm_propainter') return `src/Competitor_output/gomatching/propainter/${split}/${group}/${file}`;
+      if (type === 'gm_minimax') return `src/Competitor_output/gomatching/minimax/${split}/${group}/${file}`;
+      if (type === 'gm_diffueraser') return `src/Competitor_output/gomatching/diffueraser/${split}/${group}/${file}`;
+      if (type === 'gt_propainter') return `src/Competitor_output/gt/propainter/${split}/${group}/${file}`;
+      if (type === 'gt_minimax') return `src/Competitor_output/gt/minimax/${split}/${group}/${file}`;
+      if (type === 'gt_diffueraser') return `src/Competitor_output/gt/diffueraser/${split}/${group}/${file}`;
     }
 
     const grid = document.getElementById('video-grid');

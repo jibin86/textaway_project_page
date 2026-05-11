@@ -78,7 +78,16 @@
     }
     .title-accent { color: var(--accent); }
     .subtitle { max-width: 680px; color: #403b36; font-size: clamp(18px, 2.2vw, 24px); line-height: 1.35; margin: 0 0 24px; }
-    .authors { color: var(--muted); margin-bottom: 28px; }
+    .authors { color: var(--muted); margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+    .author-block a {
+      color: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: color .18s ease, border-color .18s ease;
+    }
+    .author-block a:hover { color: var(--ink); border-color: rgba(228,87,46,.55); }
+    .affiliation { color: var(--muted); margin-bottom: 22px; }
     .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -180,12 +189,71 @@
     .cell { border: 1px solid var(--line); border-radius: 16px; background: #fff; overflow: hidden; position: relative; }
     .cell .cap { padding: 10px 12px 4px; display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: 13px; font-weight: 760; color: var(--muted); min-height: 35px; }
     .cell .desc { padding: 0 12px 12px; color: var(--muted); font-size: 12px; line-height: 1.35; min-height: 48px; }
-    .cell.ours { border-color: rgba(228,87,46,.42); box-shadow: 0 10px 24px rgba(228,87,46,.12); }
+    .cell.ours {
+      border: 2px solid rgba(228,87,46,.85);
+      box-shadow: 0 12px 30px rgba(228,87,46,.18), 0 0 18px 6px rgba(228,87,46,.28);
+      position: relative;
+      z-index: 2;
+      transition: box-shadow .18s ease, transform .18s ease;
+    }
+
     .cell.ours .cap { color: var(--accent); }
     .badge { font-size: 11px; color: white; background: var(--accent); padding: 3px 7px; border-radius: 999px; }
 
     .bibtex { background: #191613; color: #f9efe6; border-radius: var(--radius-lg); padding: 18px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
     footer { padding: 42px 0 70px; color: var(--muted); text-align: center; }
+
+    #scrollTopButton {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      border-radius: 999px;
+      border: 1px solid rgba(229,220,210,.95);
+      background: rgba(255,253,250,.94);
+      color: var(--ink);
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(32, 23, 17, 0.12);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+      z-index: 90;
+    }
+    #scrollTopButton .scroll-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(228,87,46,.96), rgba(247,181,56,.96));
+      color: white;
+      font-size: 16px;
+      box-shadow: 0 8px 18px rgba(228,87,46,.24);
+      flex-shrink: 0;
+    }
+    #scrollTopButton .scroll-icon svg { display: block; }
+    #scrollTopButton.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    #scrollTopButton:hover {
+      border-color: rgba(228,87,46,.35);
+      box-shadow: 0 18px 44px rgba(32, 23, 17, 0.18);
+    }
+    #scrollTopButton:focus-visible {
+      outline: 3px solid rgba(27,111,122,.35);
+      outline-offset: 4px;
+    }
+
 
     @media (max-width: 900px) {
       .hero-grid, .cards, .hero-video-compare { grid-template-columns: 1fr; }
@@ -217,7 +285,13 @@
           <div class="eyebrow"><span class="dot"></span> Mask-free video text removal</div>
           <h1><span class="title-accent">TextAway</span><br/>removes overlaid text without masks.</h1>
           <p class="subtitle">An end-to-end text-aware generation framework that restores clean videos directly from corrupted inputs, without OCR, text detection, or external mask generation at inference time.</p>
-          <div class="authors">Jibin Song, Mingi Kwon, Sooyeon Go, Youngjung Uh</div>
+          <div class="is-size-5 authors">
+            <span class="author-block"><a href="https://sites.google.com/view/jibin-song" target="_blank" rel="noopener">Jibin Song</a>,</span>
+            <span class="author-block"><a href="https://sites.google.com/view/mingikwon" target="_blank" rel="noopener">Mingi Kwon</a>,</span>
+            <span class="author-block"><a href="https://sooyeon-go.github.io" target="_blank" rel="noopener">Sooyeon Go</a>,</span>
+            <span class="author-block"><a href="https://vilab.yonsei.ac.kr/members/professor" target="_blank" rel="noopener">Youngjung Uh</a></span>
+          </div>
+          <div class="affiliation is-size-6">Yonsei University</div>
           <div class="cta">
             <a class="btn primary disabled" aria-disabled="true">Paper coming soon</a>
             <a class="btn" href="#demo">View videos</a>
@@ -337,6 +411,15 @@
   <!-- <footer>
     <div class="wrap">TextAway project page · Built for qualitative comparison and supplementary video browsing.</div>
   </footer> -->
+
+  <button id="scrollTopButton" aria-label="Back to top">
+    <span class="scroll-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19V6" />
+        <path d="M7 11l5-5 5 5" />
+      </svg>
+    </span>
+  </button>
 
   <script>
     const splitDescriptions = {
@@ -547,6 +630,23 @@
 
     renderSample();
     lazyLoadVideos();
+  </script>
+
+  <script>
+    const scrollTopButton = document.getElementById('scrollTopButton');
+    if (scrollTopButton) {
+      const toggleScrollButton = () => {
+        if (window.scrollY > 320) scrollTopButton.classList.add('is-visible');
+        else scrollTopButton.classList.remove('is-visible');
+      };
+
+      window.addEventListener('scroll', toggleScrollButton, { passive: true });
+      window.addEventListener('resize', toggleScrollButton);
+      scrollTopButton.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      toggleScrollButton();
+    }
   </script>
 </body>
 </html>

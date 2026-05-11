@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="TextAway: Mask-Free Video Text Removal with End-to-End Text-Aware Generation" />
+  <title>TextAway | Mask-Free Video Text Removal</title>
+  <style>
+    :root {
+      --bg: #f7f4ef;
+      --paper: #fffdfa;
+      --ink: #171514;
+      --muted: #6d665f;
+      --line: #e5dcd2;
+      --accent: #e4572e;
+      --accent-2: #1b6f7a;
+      --accent-3: #f7b538;
+      --soft: #fff3ec;
+      --soft-2: #edf8fa;
+      --shadow: 0 18px 60px rgba(32, 23, 17, 0.10);
+      --radius-xl: 28px;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --maxw: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 20px; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(228,87,46,.15), transparent 28rem),
+        radial-gradient(circle at 90% 10%, rgba(27,111,122,.15), transparent 30rem),
+        linear-gradient(180deg, #fffaf5 0%, var(--bg) 42%, #fbfaf8 100%);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    .wrap { width: min(var(--maxw), calc(100% - 40px)); margin: 0 auto; }
+
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(18px);
+      background: rgba(255,250,245,.74);
+      border-bottom: 1px solid rgba(229,220,210,.85);
+    }
+    .nav-inner {
+      height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.03em; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 13px;
+      display: grid; place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-3));
+      color: white; box-shadow: 0 10px 24px rgba(228,87,46,.25);
+      font-weight: 900;
+    }
+    .links { display: flex; align-items: center; gap: 18px; color: var(--muted); font-size: 14px; }
+    .links a:hover { color: var(--ink); }
+
+    .hero { padding: 86px 0 64px; }
+    .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 42px; align-items: center; }
+    .eyebrow {
+      display: inline-flex; gap: 8px; align-items: center;
+      padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px;
+      background: rgba(255,255,255,.72); color: var(--accent-2); font-weight: 700; font-size: 13px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 5px rgba(228,87,46,.14); }
+    h1 {
+      margin: 20px 0 18px;
+      font-size: clamp(42px, 7vw, 84px);
+      line-height: .94;
+      letter-spacing: -0.075em;
+    }
+    .title-accent { color: var(--accent); }
+    .subtitle { max-width: 680px; color: #403b36; font-size: clamp(18px, 2.2vw, 24px); line-height: 1.35; margin: 0 0 24px; }
+    .authors { color: var(--muted); margin-bottom: 28px; }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line);
+      font-weight: 750; background: var(--paper); box-shadow: 0 8px 24px rgba(0,0,0,.06);
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 34px rgba(0,0,0,.09); }
+    .btn.primary { background: var(--ink); color: white; border-color: var(--ink); }
+    .btn.disabled { opacity: .55; cursor: not-allowed; }
+    .hero-card {
+      background: rgba(255,253,250,.78); border: 1px solid rgba(229,220,210,.92);
+      border-radius: var(--radius-xl); padding: 18px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+    }
+    .hero-card::before {
+      content: ""; position: absolute; inset: -30% -20% auto auto; width: 280px; height: 280px;
+      border-radius: 50%; background: rgba(27,111,122,.12); filter: blur(10px);
+    }
+    .video-shell { position: relative; border-radius: 22px; overflow: hidden; background: #111; border: 1px solid rgba(0,0,0,.08); }
+    video { width: 100%; display: block; background: #111; aspect-ratio: 16/9; object-fit: cover; }
+    .hero-video-compare {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .hero-video-tile {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #111;
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .hero-video-label { position: absolute; left: 10px; top: 10px; z-index: 2; padding: 5px 9px; border-radius: 999px; background: rgba(0,0,0,.66); color: white; font-size: 12px; font-weight: 800; backdrop-filter: blur(10px); }
+    .hero-caption { display: flex; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 13px; margin-top: 12px; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--accent-2); }
+
+    section { padding: 58px 0; scroll-margin-top: 20px; }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 24px; }
+    .section-kicker { color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: .12em; font-size: 12px; }
+    h2 { margin: 6px 0 0; font-size: clamp(30px, 4vw, 48px); line-height: 1.03; letter-spacing: -0.055em; }
+    .section-copy { color: var(--muted); max-width: 720px; margin: 10px 0 0; }
+
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card {
+      background: rgba(255,253,250,.82); border: 1px solid var(--line); border-radius: var(--radius-lg);
+      padding: 22px; box-shadow: 0 10px 34px rgba(0,0,0,.045);
+    }
+    .card-icon { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: var(--soft); color: var(--accent); font-size: 22px; margin-bottom: 14px; }
+    .card h3 { margin: 0 0 8px; font-size: 19px; letter-spacing: -.02em; }
+    .card p { margin: 0; color: var(--muted); }
+
+    .pipeline {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; align-items: stretch;
+      margin-top: 20px;
+    }
+    .step {
+      min-height: 150px; padding: 18px; border: 1px solid var(--line); border-radius: var(--radius-lg);
+      background: var(--paper); position: relative; overflow: visible;
+    }
+    .step::after { content: "→"; position: absolute; right: -21px; top: 50%; transform: translateY(-50%); color: var(--accent); font-weight: 900; font-size: 24px; z-index: 2; }
+    .step:last-child::after { display: none; }
+    .num { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: var(--ink); color: #fff; font-weight: 800; font-size: 13px; margin-bottom: 12px; }
+    .step strong { display: block; margin-bottom: 6px; }
+    .step span { color: var(--muted); font-size: 14px; }
+
+    .metric-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper); box-shadow: 0 10px 34px rgba(0,0,0,.045); }
+    table { border-collapse: collapse; width: 100%; min-width: 920px; font-size: 14px; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+    thead th { background: #fff7ef; color: #332a24; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    tbody tr.highlight { background: #fff3ec; font-weight: 800; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .good { color: var(--accent-2); font-weight: 800; }
+
+    .demo-panel {
+      background: rgba(255,253,250,.82); border: 1px solid var(--line); border-radius: var(--radius-xl);
+      box-shadow: var(--shadow); padding: 18px;
+    }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      border: 1px solid var(--line); background: white; border-radius: 999px; padding: 9px 13px;
+      font-weight: 750; color: var(--muted); cursor: pointer;
+    }
+    .pill.active { background: var(--ink); color: white; border-color: var(--ink); }
+    .carousel-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .nav-btn {
+      width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line);
+      background: white; color: var(--ink); font-weight: 900; font-size: 20px; cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0,0,0,.055);
+    }
+    .nav-btn:hover { transform: translateY(-1px); }
+    .counter { min-width: 72px; text-align: center; color: var(--muted); font-weight: 800; }
+    .comparison-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 4px 0 14px; }
+    .sample-title { font-size: 22px; font-weight: 850; letter-spacing: -.03em; }
+    .sample-meta { color: var(--muted); font-size: 14px; }
+    .sample-desc { margin-top: 6px; color: #4f4943; font-size: 14px; max-width: 820px; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .cell { border: 1px solid var(--line); border-radius: 16px; background: #fff; overflow: hidden; position: relative; }
+    .cell .cap { padding: 10px 12px 4px; display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: 13px; font-weight: 760; color: var(--muted); min-height: 35px; }
+    .cell .desc { padding: 0 12px 12px; color: var(--muted); font-size: 12px; line-height: 1.35; min-height: 48px; }
+    .cell.ours { border-color: rgba(228,87,46,.42); box-shadow: 0 10px 24px rgba(228,87,46,.12); }
+    .cell.ours .cap { color: var(--accent); }
+    .badge { font-size: 11px; color: white; background: var(--accent); padding: 3px 7px; border-radius: 999px; }
+
+    .bibtex { background: #191613; color: #f9efe6; border-radius: var(--radius-lg); padding: 18px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+    footer { padding: 42px 0 70px; color: var(--muted); text-align: center; }
+
+    @media (max-width: 900px) {
+      .hero-grid, .cards, .hero-video-compare { grid-template-columns: 1fr; }
+      .pipeline { grid-template-columns: 1fr; }
+      .step::after { content: "↓"; right: 20px; top: auto; bottom: -17px; transform: none; }
+      .grid { grid-template-columns: 1fr; }
+      .links { display: none; }
+      section { padding: 42px 0; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top"><span class="logo">T</span><span>TextAway</span></a>
+      <div class="links">
+        <a href="#abstract">Abstract</a>
+        <a href="#method">Method</a>
+        <a href="#results">Results</a>
+        <a href="#demo">Videos</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <header class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="eyebrow"><span class="dot"></span> Mask-free video text removal</div>
+          <h1><span class="title-accent">TextAway</span><br/>removes overlaid text without masks.</h1>
+          <p class="subtitle">An end-to-end text-aware generation framework that restores clean videos directly from corrupted inputs, without OCR, text detection, or external mask generation at inference time.</p>
+          <div class="authors">Jibin Song, Mingi Kwon, Sooyeon Go, Youngjung Uh</div>
+          <div class="cta">
+            <a class="btn primary disabled" aria-disabled="true">Paper coming soon</a>
+            <a class="btn" href="#demo">View videos</a>
+            <a class="btn disabled" aria-disabled="true">Code coming soon</a>
+            <a class="btn disabled" aria-disabled="true">Data coming soon</a>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-video-compare" aria-label="Text overlay comparison">
+            <div class="hero-video-tile">
+              <span class="hero-video-label">Corrupted input</span>
+              <video data-src="sampled_24f_fps10/GoMatching/text_removal_real/outputs_easy_hard_try2/easy/text_on/normal/pexels_landscape_landscape_6507513_000.mp4" autoplay muted loop playsinline preload="none"></video>
+            </div>
+            <div class="hero-video-tile">
+              <span class="hero-video-label">Clean target</span>
+              <video data-src="sampled_24f_fps10/GoMatching/text_removal_real/outputs_easy_hard_try2/easy/original/normal/pexels_landscape_landscape_6507513_000.mp4" autoplay muted loop playsinline preload="none"></video>
+            </div>
+          </div>
+          <div class="hero-caption">
+            <span class="tag">● Paired benchmark</span>
+            <span>Text-overlaid video vs. clean source video</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section id="abstract">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Core idea</div>
+            <h2>Text removal is not just binary-mask inpainting.</h2>
+            <p class="section-copy">Overlaid text can be semi-transparent, anti-aliased, temporally varying, and blended with complex backgrounds. TextAway treats it as soft-overlay restoration rather than hard-object removal.</p>
+          </div>
+        </div>
+        <div class="cards">
+          <article class="card"><div class="card-icon">✦</div><h3>Mask-free inference</h3><p>The model takes only the corrupted video and directly predicts a clean output. OCR, text detectors, and external masks are not required at test time.</p></article>
+          <article class="card"><div class="card-icon">▣</div><h3>Simple V2V adaptation</h3><p>A pretrained text-to-video flow matching backbone is converted into a video-to-video restoration model through latent concatenation and scale-preserving initialization.</p></article>
+          <article class="card"><div class="card-icon">◎</div><h3>Text-aware training</h3><p>Rendered text masks are used only during training for weighted flow matching and an auxiliary text-awareness branch.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="method">
+      <div class="wrap">
+        <div class="section-kicker">Method</div>
+        <h2>From corrupted video to clean restoration.</h2>
+        <p class="section-copy">Training pairs are synthesized by rendering diverse overlays on clean videos. The clean target and corrupted input are encoded into latent space, concatenated, and processed by the adapted conditional flow matching backbone.</p>
+        <div class="pipeline">
+          <div class="step"><div class="num">1</div><strong>Clean video</strong><span>Start from a clean source video that acts as the reconstruction target.</span></div>
+          <div class="step"><div class="num">2</div><strong>Text rendering</strong><span>Composite multilingual, moving, transparent, or stylized text overlays.</span></div>
+          <div class="step"><div class="num">3</div><strong>Latent concat</strong><span>Concatenate noisy target latent and corrupted input latent channel-wise.</span></div>
+          <div class="step"><div class="num">4</div><strong>Text-aware loss</strong><span>Use training-only masks for region-weighted flow matching and auxiliary supervision.</span></div>
+          <div class="step"><div class="num">5</div><strong>Mask-free output</strong><span>At inference, decode a clean video from the corrupted input alone.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="results">
+      <div class="wrap">
+        <div class="section-kicker">Quantitative results</div>
+        <h2>Strong text-region and boundary restoration.</h2>
+        <p class="section-copy">Region-specific metrics reveal failures that full-frame metrics can hide. TextAway improves text-region and boundary-band restoration while preserving non-text background regions competitively.</p>
+        <div class="metric-wrap" role="region" aria-label="Quantitative comparison table" tabindex="0">
+          <table>
+            <thead><tr><th>Mask</th><th>Method</th><th>PSNR ↑</th><th>SSIM ↑</th><th>LPIPS ↓</th><th>VFID ↓</th><th>TR-PSNR ↑</th><th>TR-SSIM ↑</th><th>BG-PSNR ↑</th><th>BG-SSIM ↑</th><th>BB-PSNR ↑</th><th>BB-SSIM ↑</th></tr></thead>
+            <tbody>
+              <tr class="highlight"><td>None</td><td>Ours</td><td class="good">34.56</td><td class="good">0.947</td><td class="good">0.055</td><td class="good">3.87</td><td class="good">27.63</td><td class="good">0.920</td><td>34.80</td><td>0.944</td><td class="good">32.04</td><td class="good">0.943</td></tr>
+              <tr><td>GoMatching++</td><td>ProPainter</td><td>26.09</td><td>0.900</td><td>0.155</td><td>37.89</td><td>15.28</td><td>0.722</td><td>35.95</td><td class="good">0.965</td><td>21.90</td><td>0.834</td></tr>
+              <tr><td>GoMatching++</td><td>MiniMax</td><td>25.27</td><td>0.877</td><td>0.168</td><td>37.01</td><td>15.48</td><td>0.710</td><td>31.98</td><td>0.938</td><td>21.44</td><td>0.805</td></tr>
+              <tr><td>GoMatching++</td><td>DiffuEraser</td><td>25.33</td><td>0.877</td><td>0.178</td><td>39.21</td><td>15.26</td><td>0.693</td><td>32.66</td><td>0.944</td><td>21.09</td><td>0.793</td></tr>
+              <tr><td>GT mask</td><td>ProPainter</td><td>30.96</td><td>0.914</td><td>0.105</td><td>14.28</td><td>19.66</td><td>0.794</td><td class="good">38.03</td><td>0.968</td><td>27.27</td><td>0.884</td></tr>
+              <tr><td>GT mask</td><td>MiniMax</td><td>29.56</td><td>0.897</td><td>0.105</td><td>9.44</td><td>21.07</td><td>0.793</td><td>32.87</td><td>0.939</td><td>24.65</td><td>0.832</td></tr>
+              <tr><td>GT mask</td><td>DiffuEraser</td><td>29.15</td><td>0.894</td><td>0.121</td><td>9.86</td><td>20.22</td><td>0.768</td><td>32.70</td><td>0.943</td><td>23.19</td><td>0.808</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <div class="section-kicker">Video results</div>
+            <h2>Comparison carousel.</h2>
+            <p class="section-copy">Use the arrows to browse samples. Each group isolates a different failure mode: easy overlays, dynamic temporal effects, large/complex normal overlays, and non-target scene text preservation.</p>
+          </div>
+        </div>
+        <div class="demo-panel">
+          <div class="controls">
+            <div class="pills" id="split-pills">
+              <button class="pill active" data-filter="all">All</button>
+              <button class="pill" data-filter="easy">Easy</button>
+              <button class="pill" data-filter="hard-dynamic">Hard · Dynamic</button>
+              <button class="pill" data-filter="hard-normal">Hard · Normal</button>
+              <button class="pill" data-filter="hard-text">Hard · Text</button>
+            </div>
+            <div class="carousel-controls" aria-label="Sample navigation">
+              <button class="nav-btn" id="prev-sample" aria-label="Previous sample">‹</button>
+              <span class="counter" id="sample-counter">1 / 1</span>
+              <button class="nav-btn" id="next-sample" aria-label="Next sample">›</button>
+              <button class="pill" id="play-all">Sync play all</button>
+              <button class="pill" id="pause-all">Pause all</button>
+            </div>
+          </div>
+          <div class="comparison-head">
+            <div><div class="sample-title" id="sample-title">Sample</div><div class="sample-meta" id="sample-meta"></div><div class="sample-desc" id="sample-desc"></div></div>
+          </div>
+          <div class="grid" id="video-grid"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap">TextAway project page · Built for qualitative comparison and supplementary video browsing.</div>
+  </footer>
+
+  <script>
+    const splitDescriptions = {
+      easy: 'Easy split: relatively opaque, static, and well-separated text. This shows whether a method can remove simple overlays without damaging the background.',
+      'hard-dynamic': 'Hard · Dynamic split: text changes over time through motion, partial spans, fades, or dynamic backgrounds. This tests temporal consistency and robustness to moving overlays.',
+      'hard-normal': 'Hard · Normal split: large or persistent overlays on complex scenes. This tests whether the method can recover content hidden by stronger text corruption.',
+      'hard-text': 'Hard · Text split: scenes contain non-target text such as signs or labels. The target overlay should be removed, while original scene text should remain intact.'
+    };
+
+    const samples = [
+      {id: 's01', name: 'Sample 01', split: 'easy', group: 'normal', file: 'pexels_landscape_landscape_6380844_000.mp4'},
+      {id: 's02', name: 'Sample 02', split: 'easy', group: 'normal', file: 'pexels_landscape_landscape_6507513_000.mp4'},
+      {id: 's03', name: 'Sample 03', split: 'easy', group: 'normal', file: 'pexels_landscape_landscape_6507497_000.mp4'},
+      {id: 's04', name: 'Sample 04', split: 'easy', group: 'normal', file: 'pixabay_gardens_videos_2975_000.mp4'},
+      {id: 's05', name: 'Sample 05', split: 'easy', group: 'normal', file: 'pixabay_natural_wonders_natural_wonders_7866402_000.mp4'},
+      {id: 's06', name: 'Sample 06', split: 'hard', group: 'dynamic', file: '0_GVlWjNQ1k_4_0to141.mp4'},
+      {id: 's07', name: 'Sample 07', split: 'hard', group: 'dynamic', file: '7HMnqnu37n8_4_802to926.mp4'},
+      {id: 's08', name: 'Sample 08', split: 'hard', group: 'dynamic', file: 'pixabay_natural_wonders_natural_wonders_8405621_000.mp4'},
+      {id: 's09', name: 'Sample 09', split: 'hard', group: 'normal', file: '0d-uy3xdP8g_49_0to112.mp4'},
+      {id: 's10', name: 'Sample 10', split: 'hard', group: 'text', file: '7GwIdsTJ4d4_0_0to106.mp4'},
+      {id: 's11', name: 'Sample 11', split: 'hard', group: 'text', file: 'pixabay_natural_wonders_natural_wonders_5430807_006.mp4'},
+      {id: 's12', name: 'Sample 12', split: 'hard', group: 'text', file: 'pixabay_natural_wonders_natural_wonders_8345632_000.mp4'},
+      {id: 's13', name: 'Sample 13', split: 'hard', group: 'text', file: 'pixabay_Snowy_Red_Plum_30905_000.mp4'}
+    ];
+
+    const methods = [
+      {label: 'Input video', type: 'input', desc: 'Corrupted video with the target text overlay composited onto the clean source.'},
+      {label: 'GT video', type: 'gt', desc: 'Clean paired target. Scene content, including original non-target scene text, should be preserved.'},
+      {label: 'Ours', type: 'ours', ours: true, desc: 'TextAway restores the video directly without OCR, text detection, or an external mask at inference time.'},
+      {label: 'GoMatching++ mask + ProPainter', type: 'gm_propainter', desc: 'Practical two-stage setting: detected text mask followed by video inpainting.'},
+      {label: 'GoMatching++ mask + MiniMax', type: 'gm_minimax', desc: 'Detected-mask baseline. Residual text can remain when the detector misses soft boundaries.'},
+      {label: 'GoMatching++ mask + DiffuEraser', type: 'gm_diffueraser', desc: 'Detected-mask diffusion baseline. Performance depends on mask localization quality.'},
+      {label: 'GT mask + ProPainter', type: 'gt_propainter', desc: 'Oracle-mask setting. This separates inpainting ability from mask-estimation errors.'},
+      {label: 'GT mask + MiniMax', type: 'gt_minimax', desc: 'Oracle-mask object removal baseline. Large masks can still make faithful restoration difficult.'},
+      {label: 'GT mask + DiffuEraser', type: 'gt_diffueraser', desc: 'Oracle-mask diffusion baseline for evaluating restoration with perfect rendered masks.'}
+    ];
+
+    function category(s) { return s.split === 'easy' ? 'easy' : `hard-${s.group}`; }
+    function pathFor(s, type) {
+      const split = s.split;
+      const group = s.group;
+      const file = s.file;
+      if (type === 'input') return `sampled_24f_fps10/GoMatching/text_removal_real/outputs_easy_hard_try2/${split}/text_on/${group}/${file}`;
+      if (type === 'gt') return `sampled_24f_fps10/GoMatching/text_removal_real/outputs_easy_hard_try2/${split}/original/${group}/${file}`;
+      if (type === 'ours') return `sampled_24f_fps10/Competitor_output/ours/${split}/text_on/${group}/predicted_videos/${file}`;
+      if (type === 'gm_propainter') return `sampled_24f_fps10/Competitor_output/gomatching/propainter/${split}/${group}/${file}`;
+      if (type === 'gm_minimax') return `sampled_24f_fps10/Competitor_output/gomatching/minimax/${split}/${group}/${file}`;
+      if (type === 'gm_diffueraser') return `sampled_24f_fps10/Competitor_output/gomatching/diffueraser/${split}/${group}/${file}`;
+      if (type === 'gt_propainter') return `sampled_24f_fps10/Competitor_output/gt/propainter/${split}/${group}/${file}`;
+      if (type === 'gt_minimax') return `sampled_24f_fps10/Competitor_output/gt/minimax/${split}/${group}/${file}`;
+      if (type === 'gt_diffueraser') return `sampled_24f_fps10/Competitor_output/gt/diffueraser/${split}/${group}/${file}`;
+    }
+
+    const grid = document.getElementById('video-grid');
+    const title = document.getElementById('sample-title');
+    const meta = document.getElementById('sample-meta');
+    const desc = document.getElementById('sample-desc');
+    const counter = document.getElementById('sample-counter');
+    let activeFilter = 'all';
+    let activeIndex = 0;
+
+    function filteredSamples() {
+      return samples.filter(s => activeFilter === 'all' || category(s) === activeFilter);
+    }
+
+    function currentSample() {
+      const fs = filteredSamples();
+      if (activeIndex >= fs.length) activeIndex = 0;
+      if (activeIndex < 0) activeIndex = Math.max(0, fs.length - 1);
+      return fs[activeIndex] || samples[0];
+    }
+
+    function updateCounter() {
+      const fs = filteredSamples();
+      counter.textContent = `${Math.min(activeIndex + 1, fs.length)} / ${fs.length}`;
+    }
+
+    function attachSrc(v) {
+      if (!v.getAttribute('src')) {
+        v.setAttribute('src', v.dataset.src);
+        v.load();
+      }
+    }
+
+    function renderSample() {
+      const activeSample = currentSample();
+      title.textContent = activeSample.name;
+      meta.textContent = `${activeSample.split.toUpperCase()} / ${activeSample.group.toUpperCase()} · ${activeSample.file}`;
+      desc.textContent = splitDescriptions[category(activeSample)] || '';
+      updateCounter();
+      grid.innerHTML = methods.map(m => {
+        const src = pathFor(activeSample, m.type);
+        return `<article class="cell ${m.ours ? 'ours' : ''}">
+          <video data-src="${src}" controls muted loop playsinline preload="none"></video>
+          <div class="cap"><span>${m.label}</span>${m.ours ? '<span class="badge">Mask-free</span>' : ''}</div>
+          <div class="desc">${m.desc}</div>
+        </article>`;
+      }).join('');
+      gridVideos().forEach(attachSrc);
+      lazyLoadVideos();
+    }
+
+    let observer;
+    function lazyLoadVideos() {
+      const videos = Array.from(document.querySelectorAll('.hero-video-compare video[data-src]'));
+      if (observer) observer.disconnect();
+      if ('IntersectionObserver' in window) {
+        observer = new IntersectionObserver(entries => {
+          entries.forEach(e => {
+            if (e.isIntersecting) {
+              attachSrc(e.target);
+              observer.unobserve(e.target);
+            }
+          });
+        }, { rootMargin: '1200px 0px' });
+        videos.forEach(v => observer.observe(v));
+      } else {
+        videos.forEach(attachSrc);
+      }
+    }
+
+    function gridVideos() {
+      return Array.from(document.querySelectorAll('#video-grid video'));
+    }
+
+    const heroVideos = Array.from(document.querySelectorAll('.hero-video-compare video'));
+    let heroSyncBusy = false;
+    let heroStarted = false;
+
+    function heroAllReady() {
+      return heroVideos.length > 0 && heroVideos.every(v => v.readyState >= 2);
+    }
+
+    function heroSetTime(time) {
+      heroVideos.forEach(v => {
+        try { v.currentTime = time; } catch (_) {}
+      });
+    }
+
+    function heroPlayTogether() {
+      if (!heroAllReady() || heroSyncBusy) return;
+      heroSyncBusy = true;
+      heroSetTime(0);
+      Promise.all(heroVideos.map(v => v.play())).finally(() => {
+        heroSyncBusy = false;
+        heroStarted = true;
+      });
+    }
+
+    heroVideos.forEach(v => {
+      v.addEventListener('canplay', () => {
+        if (!heroStarted && heroAllReady()) heroPlayTogether();
+      });
+
+      v.addEventListener('timeupdate', () => {
+        if (heroSyncBusy || heroVideos.length < 2) return;
+        const [a, b] = heroVideos;
+        const drift = Math.abs(a.currentTime - b.currentTime);
+        if (drift > 0.08) {
+          heroSyncBusy = true;
+          const target = Math.min(a.currentTime, b.currentTime);
+          heroSetTime(target);
+          heroSyncBusy = false;
+        }
+      });
+
+      v.addEventListener('ended', () => {
+        if (heroSyncBusy) return;
+        heroPlayTogether();
+      });
+    });
+
+    function stepSample(delta) {
+      const fs = filteredSamples();
+      activeIndex = (activeIndex + delta + fs.length) % fs.length;
+      renderSample();
+    }
+
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        activeIndex = 0;
+        renderSample();
+      });
+    });
+
+    document.getElementById('prev-sample').addEventListener('click', () => stepSample(-1));
+    document.getElementById('next-sample').addEventListener('click', () => stepSample(1));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft') stepSample(-1);
+      if (e.key === 'ArrowRight') stepSample(1);
+    });
+
+    document.getElementById('play-all').addEventListener('click', () => {
+      document.querySelectorAll('#video-grid video').forEach(v => {
+        v.currentTime = 0;
+        v.play();
+      });
+    });
+    document.getElementById('pause-all').addEventListener('click', () => {
+      document.querySelectorAll('#video-grid video').forEach(v => {
+        v.pause();
+        v.currentTime = 0;
+      });
+    });
+
+    renderSample();
+    lazyLoadVideos();
+  </script>
+</body>
+</html>

@@ -263,6 +263,28 @@
       .links { display: none; }
       section { padding: 42px 0; }
     }
+
+    .paper-figure {
+      margin-top: 28px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      background: rgba(255,253,250,.82);
+      box-shadow: 0 10px 34px rgba(0,0,0,.045);
+    }
+
+    .paper-figure img {
+      width: 100%;
+      display: block;
+      border-radius: 16px;
+      background: white;
+    }
+
+    .paper-figure p {
+      margin: 12px 4px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -346,6 +368,13 @@
           <div class="step"><div class="num">3</div><strong>Latent concat</strong><span>Concatenate noisy target latent and corrupted input latent channel-wise.</span></div>
           <div class="step"><div class="num">4</div><strong>Text-aware loss</strong><span>Use training-only masks for region-weighted flow matching and auxiliary supervision.</span></div>
           <div class="step"><div class="num">5</div><strong>Mask-free output</strong><span>At inference, decode a clean video from the corrupted input alone.</span></div>
+        </div>
+        <div class="paper-figure">
+          <img src="src/figures/framework.jpg" alt="Overview of the TextAway framework">
+          <p>
+            Full framework overview. TextAway uses rendered masks only during training,
+            while inference requires only the corrupted input video.
+          </p>
         </div>
       </div>
     </section>
